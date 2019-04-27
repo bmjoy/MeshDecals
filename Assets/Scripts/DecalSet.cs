@@ -34,6 +34,7 @@ namespace DecalSystem
 		float Depth;
 		SkinnedMeshRenderer SkiMesh;
 		MeshFilter MFilter;
+		Plane[] Planes;
 
 		// builder vars
 		List<Vector3> bufVertices = new List<Vector3>();
@@ -85,12 +86,7 @@ namespace DecalSystem
 			}
 		}
 
-		void AddDecalStatic()
-		{
-
-		}
-
-		void AddDecalSkinned()
+		void CalculateMatrixAndPlanes()
 		{
 			// project from a close point from the hit point
 			Matrix4x4 v = Matrix4x4.Inverse(Matrix4x4.TRS(Point - Origin.forward * PointBackwardOffset, Quaternion.Euler(0, 0, Rotation) * Origin.rotation, new Vector3(1, 1, -1)));
@@ -103,6 +99,16 @@ namespace DecalSystem
 											0.0001f, Depth);
 			VP = p * v;
 
+			Planes = GeometryUtility.CalculateFrustumPlanes(VP);
+		}
+
+		void AddDecalStatic()
+		{
+
+		}
+
+		void AddDecalSkinned()
+		{
 			// get decalmesh
 			Mesh decalMesh = Mesh.Instantiate(SkiMesh.sharedMesh);
 
@@ -167,12 +173,12 @@ namespace DecalSystem
 
 		bool isInsideFrustum(int t1, int t2, int t3)
 		{
-			Plane[] planes = GeometryUtility.CalculateFrustumPlanes(VP);
+
 
 			// check against the 6 planes
 			for (int i = 0; i < 6; i++)
 			{
-				if (!planes[i].GetSide(transform.TransformPoint(Vertices[t1])) && !planes[i].GetSide(transform.TransformPoint(Vertices[t2])) && !planes[i].GetSide(transform.TransformPoint(Vertices[t3])))
+				if (!Planes[i].GetSide(transform.TransformPoint(Vertices[t1])) && !Planes[i].GetSide(transform.TransformPoint(Vertices[t2])) && !Planes[i].GetSide(transform.TransformPoint(Vertices[t3])))
 					return false;
 				if (!FacingNormal(Vertices[t1], Vertices[t2], Vertices[t3]))
 					return false;
