@@ -59,7 +59,7 @@ namespace DecalSystem
 				DecalSet decalset = hitInfo.transform.GetComponent<DecalSet>();
 				if (decalset == null)
 					return;
-
+				
 				decalset.AddDecal(transform, hitInfo.point, decalDef, m_Size, Random.Range(0, 360), m_NormalFactor, m_Offset);
 			}
 

@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace DecalSystem
 {
+	[CreateAssetMenu(fileName="DecalDef",menuName="Decal Definition")]
 	public class DecalDefinition : ScriptableObject
 	{
 		public Material material;

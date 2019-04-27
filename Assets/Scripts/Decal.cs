@@ -8,7 +8,7 @@ namespace DecalSystem
 		public DecalDefinition decalDefinition;
 		public Mesh mesh;
 
-		public Decal(DecalDefinition decalDef)
+		public void Init(DecalDefinition decalDef)
 		{
 			decalDefinition = decalDef;
 		}
