@@ -58,8 +58,11 @@
      <Compile Include="Assets\DecalSystem\DecalSystem\Decal.cs" />
      <Compile Include="Assets\DecalSystem\DecalSystem\DecalBuilder.cs" />
      <Compile Include="Assets\Scripts\CameraSkinnedDecal.cs" />
+     <Compile Include="Assets\Scripts\Decal.cs" />
+     <Compile Include="Assets\Scripts\DecalDefinition.cs" />
      <Compile Include="Assets\Scripts\DecalPolygon.cs" />
      <Compile Include="Assets\Scripts\DecalSet.cs" />
+     <Compile Include="Assets\Scripts\DecalSetSkinned.cs" />
      <None Include="Assets\Decal.shader" />
  <Reference Include="Unity.Timeline.Editor">
  <HintPath>F:/my_files/projects/unity/skinnedDecalSystem/Library/ScriptAssemblies/Unity.Timeline.Editor.dll</HintPath>

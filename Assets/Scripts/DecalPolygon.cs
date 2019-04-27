@@ -4,7 +4,6 @@ using System.Collections.Generic;
 namespace DecalSystem
 {
 
-
 	public class DecalPolygon
 	{
 

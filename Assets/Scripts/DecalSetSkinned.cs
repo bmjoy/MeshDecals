@@ -17,11 +17,11 @@ namespace DecalSystem
 			m_SkiMesh = GetComponent<SkinnedMeshRenderer>();
 		}
 
-		public override void AddDecal(Transform origin, Vector3 point, Decal decal, float size = 0.2f, float rotation = 0, float normalFactor = 0, float offset = 0.1f, float depth = 1)
+		public override void AddDecal(Transform origin, Vector3 point, DecalDefinition decalDefinition, float size = 0.2f, float rotation = 0, float normalFactor = 0, float offset = 0.1f, float depth = 1)
 		{
 			m_DecalCount++;
 
-			if (m_DecalCount > m_MaxDecals)
+			while (m_DecalCount > m_MaxDecals)
 			{
 				Destroy(m_DecalList[0]);
 				m_DecalList.RemoveAt(0);
@@ -89,7 +89,7 @@ namespace DecalSystem
 			decalSkinRend.sharedMesh = decalMesh;
 			decalSkinRend.bones = m_SkiMesh.bones;
 			decalSkinRend.rootBone = m_SkiMesh.rootBone;
-			decalSkinRend.sharedMaterial = decal.decalDefinition.material;
+			decalSkinRend.sharedMaterial = decalDefinition.material;
 
 			m_DecalList.Add(decalGO);
 

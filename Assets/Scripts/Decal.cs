@@ -6,31 +6,11 @@ namespace DecalSystem
 	public class Decal : MonoBehaviour
 	{
 		public DecalDefinition decalDefinition;
+		public Mesh mesh;
 
-		MeshFilter meshFilter;
-		MeshRenderer meshRenderer;
-
-		[HideInInspector]
-		public bool initialized = false;
-
-		public void Init(DecalDefinition decalDef = null)
+		public Decal(DecalDefinition decalDef)
 		{
-			if (initialized)
-				Debug.Log("Already initialized");
-			meshFilter = gameObject.AddComponent<MeshFilter>();
-			meshRenderer = gameObject.AddComponent<MeshRenderer>();
-
-			if (decalDef != null)
-				decalDefinition = decalDef;
-			meshRenderer.material = decalDefinition.material;
-
-			initialized = true;
-		}
-
-		void Start()
-		{
-			if (!initialized)
-				Init();
+			decalDefinition = decalDef;
 		}
 	}
 }

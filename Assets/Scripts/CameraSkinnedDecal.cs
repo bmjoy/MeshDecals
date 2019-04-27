@@ -60,9 +60,7 @@ namespace DecalSystem
 				if (decalset == null)
 					return;
 
-				Decal newDec = new Decal();
-				newDec.Init(decalDef);
-				decalset.AddDecal(transform, hitInfo.point, newDec, m_Size, Random.Range(0, 360), m_NormalFactor, m_Offset);
+				decalset.AddDecal(transform, hitInfo.point, decalDef, m_Size, Random.Range(0, 360), m_NormalFactor, m_Offset);
 			}
 
 		}

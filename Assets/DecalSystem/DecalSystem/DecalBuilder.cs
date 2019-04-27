@@ -82,11 +82,12 @@ public class DecalBuilder
 
 	private static void AddPolygon(DecalPolygon poly, Vector3 normal)
 	{
-		int ind1 = AddVertex(poly.vertices[0], normal);
+		// int ind1 = AddVertex(poly.vertices[0], normal);
 		for (int i = 1; i < poly.vertices.Count - 1; i++)
 		{
 			int ind2 = AddVertex(poly.vertices[i], normal);
 			int ind3 = AddVertex(poly.vertices[i + 1], normal);
+			int ind1 = AddVertex(poly.vertices[0], normal);
 
 			bufIndices.Add(ind1);
 			bufIndices.Add(ind2);

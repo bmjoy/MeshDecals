@@ -20,7 +20,7 @@ namespace DecalSystem
 		protected Vector3 m_Dir;
 		protected float m_UVRot;
 		
-		public virtual void AddDecal(Transform origin, Vector3 point, Decal decal, float size = 0.2f, float rotation = 0, float normalFactor = 0, float offset = 0.1f, float depth = 1)
+		public virtual void AddDecal(Transform origin, Vector3 point, DecalDefinition decalDefinition, float size = 0.2f, float rotation = 0, float normalFactor = 0, float offset = 0.1f, float depth = 1)
 		{
 			
 		}
