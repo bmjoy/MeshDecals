@@ -17,8 +17,6 @@ public class DecalBuilder
 
 		float maxAngle = decal.maxAngle;
 
-		// TODO : make them go through all submeshes
-
 		Vector3[] vertices = affectedMesh.vertices;
 		int[] triangles = affectedMesh.GetTriangles(0);
 		int startVertexCount = bufVertices.Count;

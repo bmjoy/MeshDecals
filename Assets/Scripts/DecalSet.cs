@@ -93,7 +93,7 @@ namespace DecalSystem
 		void AddDecalSkinned()
 		{
 			// project from a close point from the hit point
-			Matrix4x4 v = Matrix4x4.Inverse(Matrix4x4.TRS(Point - Origin.forward * PointBackwardOffset, Origin.rotation, new Vector3(1, 1, -1)));
+			Matrix4x4 v = Matrix4x4.Inverse(Matrix4x4.TRS(Point - Origin.forward * PointBackwardOffset, Quaternion.Euler(0, 0, Rotation) * Origin.rotation, new Vector3(1, 1, -1)));
 			// project from origin (need a high depth value)
 			// Matrix4x4 v = Matrix4x4.Inverse(Matrix4x4.TRS(origin.position, origin.rotation, new Vector3(1, 1, -1)));
 			Matrix4x4 p = Matrix4x4.Ortho(-DecalDef.sprite.rect.size.x / DecalDef.sprite.texture.width,
@@ -101,7 +101,6 @@ namespace DecalSystem
 											-DecalDef.sprite.rect.size.y / DecalDef.sprite.texture.height,
 											DecalDef.sprite.rect.size.y / DecalDef.sprite.texture.height,
 											0.0001f, Depth);
-
 			VP = p * v;
 
 			// get decalmesh
@@ -128,6 +127,7 @@ namespace DecalSystem
 				{
 					if (isInsideFrustum(triangles[i], triangles[i + 1], triangles[i + 2]))
 					{
+						// TODO: need to clip decals to frustum, otherwise sprite decals leak
 						triangleList.Add(triangles[i]);
 						triangleList.Add(triangles[i + 1]);
 						triangleList.Add(triangles[i + 2]);
@@ -158,7 +158,7 @@ namespace DecalSystem
 
 			// create decal component
 			Decal decal = decalGO.AddComponent<Decal>();
-			decal.Init(DecalDef);
+			decal.Init(DecalDef, decalMesh);
 
 			DecalList.Add(decalGO);
 
@@ -186,7 +186,6 @@ namespace DecalSystem
 			uvs[t2] = VP * transform.localToWorldMatrix * new Vector4(Vertices[t2].x, Vertices[t2].y, Vertices[t2].z, 1);
 			uvs[t3] = VP * transform.localToWorldMatrix * new Vector4(Vertices[t3].x, Vertices[t3].y, Vertices[t3].z, 1);
 
-
 			// scale to fit
 			Vector2 aspect = new Vector2(DecalDef.sprite.rect.size.x / DecalDef.sprite.texture.width, DecalDef.sprite.rect.size.y / DecalDef.sprite.texture.height);
 			uvs[t1] *= aspect;
@@ -197,12 +196,6 @@ namespace DecalSystem
 			uvs[t1] *= 0.5f;
 			uvs[t2] *= 0.5f;
 			uvs[t3] *= 0.5f;
-
-			// rotate
-			Quaternion rot = Quaternion.Euler(0, 0, Rotation);
-			uvs[t1] = rot * uvs[t1];
-			uvs[t2] = rot * uvs[t2];
-			uvs[t3] = rot * uvs[t3];
 
 			// move to sprite pos
 			Vector2 pos = new Vector2(DecalDef.sprite.rect.center.x / DecalDef.sprite.texture.width, DecalDef.sprite.rect.center.y / DecalDef.sprite.texture.height);
