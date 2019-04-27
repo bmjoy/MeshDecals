@@ -67,7 +67,10 @@ namespace DecalSystem
 			NormalFactor = normalFactor;
 			PointBackwardOffset = pointBackwardOffset;
 			Depth = depth;
-
+			
+			// calculate matrix and frustum planes
+			CalculateMatrixAndPlanes();
+			
 			// choose which type of decal
 			if (SetType == DecalSetType.Static)
 				AddDecalStatic();
