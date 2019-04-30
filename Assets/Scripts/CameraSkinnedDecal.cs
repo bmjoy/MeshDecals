@@ -55,12 +55,9 @@ namespace DecalSystem
 			var ray = m_Camera.ScreenPointToRay(Input.mousePosition);
 			if (Physics.Raycast(ray, out hitInfo))
 			{
-
 				DecalSet decalset = hitInfo.transform.GetComponent<DecalSet>();
-				if (decalset == null)
-					return;
-
-				decalset.AddDecal(transform.forward, hitInfo.point, decalDef);
+				if (decalset != null)
+					decalset.AddDecal(transform.forward, hitInfo.point, decalDef);
 			}
 
 		}
