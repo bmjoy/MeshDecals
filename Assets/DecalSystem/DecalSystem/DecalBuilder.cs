@@ -95,31 +95,19 @@ public class DecalBuilder
 
 	private static int AddVertex(Vector3 vertex, Vector3 normal)
 	{
-		int index = FindVertex(vertex);
-		if (index == -1)
-		{
+		// int index = FindVertex(vertex);
+		// if (index == -1)
+		// {
 			bufVertices.Add(vertex);
 			bufNormals.Add(normal);
-			index = bufVertices.Count - 1;
-		}
-		else
-		{
-			Vector3 t = bufNormals[index] + normal;
-			bufNormals[index] = t.normalized;
-		}
+			var index = bufVertices.Count - 1;
+		// }
+		// else
+		// {
+			// Vector3 t = bufNormals[index] + normal;
+			// bufNormals[index] = t.normalized;
+		// }
 		return (int)index;
-	}
-
-	private static int FindVertex(Vector3 vertex)
-	{
-		for (int i = 0; i < bufVertices.Count; i++)
-		{
-			if (Vector3.Distance(bufVertices[i], vertex) < 0.01f)
-			{
-				return i;
-			}
-		}
-		return -1;
 	}
 
 	private static void GenerateTexCoords(int start, Sprite sprite)

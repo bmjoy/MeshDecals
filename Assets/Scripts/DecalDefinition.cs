@@ -9,5 +9,6 @@ namespace DecalSystem
 		public Material material;
 		public Sprite sprite;
 		public bool randomRotation = true;
+		public float rotation;
 	}
 }

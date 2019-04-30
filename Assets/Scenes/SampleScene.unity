@@ -326,6 +326,7 @@ GameObject:
   - component: {fileID: 1015590307}
   - component: {fileID: 1015590306}
   - component: {fileID: 1015590305}
+  - component: {fileID: 1015590309}
   m_Layer: 0
   m_Name: Cube
   m_TagString: Untagged
@@ -405,6 +406,22 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1015590309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1015590304}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b451a3bcb20fa4488e66fb5332da81a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SetType: 0
+  MaxDecals: 10
+  DecalQuality: 4
+  DecalList: []
 --- !u!1001 &1724443584378094678
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -471,6 +488,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4209690626399810356, guid: d79f400e04c105642876e6a33c0d6169,
+        type: 3}
+      propertyPath: setType
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4209690626399810356, guid: d79f400e04c105642876e6a33c0d6169,
+        type: 3}
+      propertyPath: SetType
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d79f400e04c105642876e6a33c0d6169, type: 3}

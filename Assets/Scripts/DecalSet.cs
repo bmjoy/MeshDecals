@@ -10,6 +10,7 @@ namespace DecalSystem
 		Static,
 		Skinned,
 	}
+
 	public class DecalSet : MonoBehaviour
 	{
 		public DecalSetType SetType = DecalSetType.Static;
@@ -18,11 +19,15 @@ namespace DecalSystem
 		public SkinQuality DecalQuality = SkinQuality.Bone4;
 
 		[HideInInspector]
-		public List<GameObject> DecalList = new List<GameObject>();
+		public List<Decal> DecalList = new List<Decal>();
 
 		// privates
 		int DecalCount = 0;
+		SkinnedMeshRenderer SkiMesh;
+		MeshFilter MFilter;
 		Vector3[] Vertices;
+
+		// builder vars
 		Matrix4x4 VP;
 		Transform Origin;
 		Vector3 Point;
@@ -32,15 +37,7 @@ namespace DecalSystem
 		float NormalFactor;
 		float PointBackwardOffset;
 		float Depth;
-		SkinnedMeshRenderer SkiMesh;
-		MeshFilter MFilter;
 		Plane[] Planes;
-
-		// builder vars
-		List<Vector3> bufVertices = new List<Vector3>();
-		List<Vector3> bufNormals = new List<Vector3>();
-		List<Vector2> bufTexCoords = new List<Vector2>();
-		List<int> bufIndices = new List<int>();
 
 		void Init()
 		{
@@ -56,6 +53,23 @@ namespace DecalSystem
 			Init();
 		}
 
+		void CalculateMatrixAndPlanes()
+		{
+			// project from a close point from the hit point
+			// Matrix4x4 v = Matrix4x4.Inverse(Matrix4x4.TRS(Point - Origin.forward * PointBackwardOffset, Quaternion.Euler(0, 0, Rotation) *Origin.transform.rotation, new Vector3(1, 1, -1)));
+			Matrix4x4 v = Matrix4x4.Inverse(Matrix4x4.TRS(Point - Origin.forward * PointBackwardOffset, Quaternion.Euler(0, 0, DecalDef.rotation) * Origin.transform.rotation, new Vector3(1, 1, -1)));
+			// project from origin (need a high depth value)
+			// Matrix4x4 v = Matrix4x4.Inverse(Matrix4x4.TRS(origin.position, origin.rotation, new Vector3(1, 1, -1)));
+			Matrix4x4 p = Matrix4x4.Ortho(-(DecalDef.sprite.rect.size.x / DecalDef.sprite.texture.width) * Size,
+											(DecalDef.sprite.rect.size.x / DecalDef.sprite.texture.width) * Size,
+											-(DecalDef.sprite.rect.size.y / DecalDef.sprite.texture.height) * Size,
+											(DecalDef.sprite.rect.size.y / DecalDef.sprite.texture.height) * Size,
+											0.0001f, Depth);
+			VP = p * v;
+
+			Planes = GeometryUtility.CalculateFrustumPlanes(VP);
+		}
+
 		public void AddDecal(Transform origin, Vector3 point, DecalDefinition decalDefinition, float size = 0.2f, float rotation = 0, float normalFactor = 0, float pointBackwardOffset = 0.1f, float depth = 1)
 		{
 			// set globals
@@ -67,10 +81,10 @@ namespace DecalSystem
 			NormalFactor = normalFactor;
 			PointBackwardOffset = pointBackwardOffset;
 			Depth = depth;
-			
+
 			// calculate matrix and frustum planes
 			CalculateMatrixAndPlanes();
-			
+
 			// choose which type of decal
 			if (SetType == DecalSetType.Static)
 				AddDecalStatic();
@@ -83,26 +97,10 @@ namespace DecalSystem
 			// check for limits 
 			while (DecalCount > MaxDecals)
 			{
-				Destroy(DecalList[0]);
+				Destroy(DecalList[0].gameObject);
 				DecalList.RemoveAt(0);
 				DecalCount--;
 			}
-		}
-
-		void CalculateMatrixAndPlanes()
-		{
-			// project from a close point from the hit point
-			Matrix4x4 v = Matrix4x4.Inverse(Matrix4x4.TRS(Point - Origin.forward * PointBackwardOffset, Quaternion.Euler(0, 0, Rotation) * Origin.rotation, new Vector3(1, 1, -1)));
-			// project from origin (need a high depth value)
-			// Matrix4x4 v = Matrix4x4.Inverse(Matrix4x4.TRS(origin.position, origin.rotation, new Vector3(1, 1, -1)));
-			Matrix4x4 p = Matrix4x4.Ortho(-DecalDef.sprite.rect.size.x / DecalDef.sprite.texture.width,
-											DecalDef.sprite.rect.size.x / DecalDef.sprite.texture.width,
-											-DecalDef.sprite.rect.size.y / DecalDef.sprite.texture.height,
-											DecalDef.sprite.rect.size.y / DecalDef.sprite.texture.height,
-											0.0001f, Depth);
-			VP = p * v;
-
-			Planes = GeometryUtility.CalculateFrustumPlanes(VP);
 		}
 
 		void AddDecalStatic()
@@ -145,9 +143,6 @@ namespace DecalSystem
 					}
 				}
 
-				if (triangleList.Count < 3)
-					continue;
-
 				decalMesh.SetTriangles(triangleList.ToArray(), subMesh);
 			}
 			decalMesh.uv = uvs;
@@ -169,7 +164,7 @@ namespace DecalSystem
 			Decal decal = decalGO.AddComponent<Decal>();
 			decal.Init(DecalDef, decalMesh);
 
-			DecalList.Add(decalGO);
+			DecalList.Add(decal);
 
 			Destroy(bakeMesh);
 		}
@@ -196,7 +191,7 @@ namespace DecalSystem
 			uvs[t3] = VP * transform.localToWorldMatrix * new Vector4(Vertices[t3].x, Vertices[t3].y, Vertices[t3].z, 1);
 
 			// scale to fit
-			Vector2 aspect = new Vector2(DecalDef.sprite.rect.size.x / DecalDef.sprite.texture.width, DecalDef.sprite.rect.size.y / DecalDef.sprite.texture.height);
+			Vector2 aspect = new Vector2((DecalDef.sprite.rect.size.x / DecalDef.sprite.texture.width), (DecalDef.sprite.rect.size.y / DecalDef.sprite.texture.height));
 			uvs[t1] *= aspect;
 			uvs[t2] *= aspect;
 			uvs[t3] *= aspect;
@@ -206,6 +201,7 @@ namespace DecalSystem
 			uvs[t2] *= 0.5f;
 			uvs[t3] *= 0.5f;
 
+			// TODO: Fix rotation offset error
 			// move to sprite pos
 			Vector2 pos = new Vector2(DecalDef.sprite.rect.center.x / DecalDef.sprite.texture.width, DecalDef.sprite.rect.center.y / DecalDef.sprite.texture.height);
 			uvs[t1] += pos;
@@ -213,25 +209,6 @@ namespace DecalSystem
 			uvs[t3] += pos;
 		}
 
-		void GenerateTexCoords(int start)
-		{
-			Rect rect = DecalDef.sprite.rect;
-			rect.x /= DecalDef.sprite.texture.width;
-			rect.y /= DecalDef.sprite.texture.height;
-			rect.width /= DecalDef.sprite.texture.width;
-			rect.height /= DecalDef.sprite.texture.height;
-
-			for (int i = start; i < bufVertices.Count; i++)
-			{
-				Vector3 vertex = bufVertices[i];
-
-				Vector2 uv = new Vector2(vertex.x + 0.5f, vertex.y + 0.5f);
-				uv.x = Mathf.Lerp(rect.xMin, rect.xMax, uv.x);
-				uv.y = Mathf.Lerp(rect.yMin, rect.yMax, uv.y);
-
-				bufTexCoords.Add(uv);
-			}
-		}
 
 		bool FacingNormal(Vector3 v1, Vector3 v2, Vector3 v3)
 		{
@@ -242,5 +219,6 @@ namespace DecalSystem
 
 			return true;
 		}
+
 	}
 }
