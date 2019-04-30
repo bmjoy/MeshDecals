@@ -309,22 +309,19 @@ namespace DecalSystem
 			Destroy(bakeMesh);
 		}
 
+		Vector3[] vecs = new Vector3[3];
 		bool isInsideFrustum(int t1, int t2, int t3)
 		{
-			Vector3[] vecs = new Vector3[] { Vertices[t1], Vertices[t2], Vertices[t3] };
+			vecs[0] = Vertices[t1];
+			vecs[1] = Vertices[t2];
+			vecs[2] = Vertices[t3];
 
-			// check against the 6 planes
-			// for (int i = 0; i < 6; i++)
-			// {
-				if (!FacingNormal(Vertices[t1], Vertices[t2], Vertices[t3]))
-					return false;
+			if (!FacingNormal(Vertices[t1], Vertices[t2], Vertices[t3]))
+				return false;
 
-				// if (!Planes[i].GetSide(transform.TransformPoint(Vertices[t1])) && !Planes[i].GetSide(transform.TransformPoint(Vertices[t2])) && !Planes[i].GetSide(transform.TransformPoint(Vertices[t3])))
-				// 	return false;
+			if (!GeometryUtility.TestPlanesAABB(Planes, GeometryUtility.CalculateBounds(vecs, transform.localToWorldMatrix)))
+				return false;
 
-				if (!GeometryUtility.TestPlanesAABB(Planes, GeometryUtility.CalculateBounds(vecs, transform.localToWorldMatrix)))
-					return false;
-			// }
 			return true;
 		}
 
