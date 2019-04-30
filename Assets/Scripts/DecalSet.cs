@@ -12,7 +12,6 @@ namespace DecalSystem
 
 	public class DecalSet : MonoBehaviour
 	{
-		public DecalSetType SetType = DecalSetType.Static;
 		public int MaxDecals = 10;
 		[Header("Skinned")]
 		public SkinQuality DecalQuality = SkinQuality.Bone4;
@@ -25,6 +24,7 @@ namespace DecalSystem
 		SkinnedMeshRenderer SkiMesh;
 		MeshFilter MFilter;
 		Vector3[] Vertices;
+		bool isSkinned = false;
 
 		// builder vars
 		Matrix4x4 VP;
@@ -43,8 +43,15 @@ namespace DecalSystem
 			SkiMesh = GetComponent<SkinnedMeshRenderer>();
 			MFilter = GetComponent<MeshFilter>();
 
-			if (SetType == DecalSetType.Static)
+			if (SkiMesh != null)
+			{
 				Vertices = MFilter.sharedMesh.vertices;
+				isSkinned = true;
+			}
+			else if(MFilter != null)
+			{
+				Vertices = MFilter.sharedMesh.vertices;
+			}
 		}
 
 		void Start()
@@ -66,7 +73,6 @@ namespace DecalSystem
 
 			Process();
 		}
-
 
 		public void AddDecal(Vector3 direction, Vector3 point, DecalDefinition decalDefinition)
 		{
@@ -147,7 +153,17 @@ namespace DecalSystem
 			Matrix4x4 v = Matrix4x4.Inverse(Matrix4x4.TRS(Point - Direction * PointBackwardOffset, Quaternion.LookRotation(Direction, Vector3.up) * Rotation, new Vector3(1, 1, -1)));
 			// project from origin (need a high depth value)
 			// Matrix4x4 v = Matrix4x4.Inverse(Matrix4x4.TRS(origin.position, origin.rotation, new Vector3(1, 1, -1)));
-			Matrix4x4 p = Matrix4x4.Ortho(-Size, Size, -Size, Size, 0.0001f, Depth);
+			
+			Matrix4x4 p;
+			if (isSkinned)
+				p = Matrix4x4.Ortho(-Size, Size, -Size, Size, 0.0001f, Depth);
+			else
+				p = Matrix4x4.Ortho(-(DecalDef.sprite.rect.size.x / DecalDef.sprite.texture.width) * Size,
+									(DecalDef.sprite.rect.size.x / DecalDef.sprite.texture.width) * Size,
+									-(DecalDef.sprite.rect.size.y / DecalDef.sprite.texture.height) * Size,
+									(DecalDef.sprite.rect.size.y / DecalDef.sprite.texture.height) * Size,
+									0.0001f, Depth);
+				
 			VP = p * v;
 
 			Planes = GeometryUtility.CalculateFrustumPlanes(VP);
@@ -178,7 +194,56 @@ namespace DecalSystem
 
 		void AddDecalStatic()
 		{
+			// get decalmesh
+			Mesh decalMesh = Mesh.Instantiate(SkiMesh.sharedMesh);
 
+			// uvs
+			Vector2[] uvs = decalMesh.uv;
+
+			// process each submesh
+			for (int subMesh = 0; subMesh < decalMesh.subMeshCount; subMesh++)
+			{
+				List<int> triangleList = new List<int>();
+				int[] triangles = decalMesh.GetTriangles(subMesh);
+
+				// check each triangle against view Frustum
+				for (int i = 0; i < triangles.Length; i += 3)
+				{
+					if (isInsideFrustum(triangles[i], triangles[i + 1], triangles[i + 2]))
+					{
+						// TODO: need to clip decals to frustum, otherwise sprite decals leak
+						triangleList.Add(triangles[i]);
+						triangleList.Add(triangles[i + 1]);
+						triangleList.Add(triangles[i + 2]);
+
+						GenerateUVs(triangles[i], triangles[i + 1], triangles[i + 2], ref uvs);
+					}
+				}
+
+				decalMesh.SetTriangles(triangleList.ToArray(), subMesh);
+			}
+			decalMesh.uv = uvs;
+
+			// create go
+			GameObject decalGO = new GameObject("decalSkinned");
+			decalGO.transform.parent = SkiMesh.transform;
+			decalGO.transform.localPosition = Point;
+			decalGO.transform.localRotation = Rotation;
+
+			// meshfilter
+			MeshFilter decalMf = decalGO.AddComponent<MeshFilter>();
+			decalMf.sharedMesh = decalMesh;
+
+			// create mesh renderer compnent
+			MeshRenderer decalSkinRend = decalGO.AddComponent<MeshRenderer>();
+			decalSkinRend.shadowCastingMode = ShadowCastingMode.Off;
+			decalSkinRend.sharedMaterial = DecalDef.material;
+
+			// create decal component
+			Decal decal = decalGO.AddComponent<Decal>();
+			decal.Init(DecalDef, decalMesh);
+
+			DecalList.Add(decal);
 		}
 
 		void AddDecalSkinned()
@@ -244,14 +309,12 @@ namespace DecalSystem
 
 		bool isInsideFrustum(int t1, int t2, int t3)
 		{
-
-
 			// check against the 6 planes
 			for (int i = 0; i < 6; i++)
 			{
-				if (!Planes[i].GetSide(transform.TransformPoint(Vertices[t1])) && !Planes[i].GetSide(transform.TransformPoint(Vertices[t2])) && !Planes[i].GetSide(transform.TransformPoint(Vertices[t3])))
-					return false;
 				if (!FacingNormal(Vertices[t1], Vertices[t2], Vertices[t3]))
+					return false;
+				if (!Planes[i].GetSide(transform.TransformPoint(Vertices[t1])) && !Planes[i].GetSide(transform.TransformPoint(Vertices[t2])) && !Planes[i].GetSide(transform.TransformPoint(Vertices[t3])))
 					return false;
 			}
 			return true;
@@ -263,31 +326,15 @@ namespace DecalSystem
 			uvs[t2] = VP * transform.localToWorldMatrix * new Vector4(Vertices[t2].x, Vertices[t2].y, Vertices[t2].z, 1);
 			uvs[t3] = VP * transform.localToWorldMatrix * new Vector4(Vertices[t3].x, Vertices[t3].y, Vertices[t3].z, 1);
 
-			// scale to fit
-			// Vector2 aspect = new Vector2((DecalDef.sprite.rect.size.x / DecalDef.sprite.texture.width), (DecalDef.sprite.rect.size.y / DecalDef.sprite.texture.height));
-			// uvs[t1] *= aspect;
-			// uvs[t2] *= aspect;
-			// uvs[t3] *= aspect;
-
-			//scale more
 			uvs[t1] *= 0.5f;
 			uvs[t2] *= 0.5f;
 			uvs[t3] *= 0.5f;
 
-			// rotate
-			// uvs[t1] = Rotation * uvs[t1];
-			// uvs[t2] = Rotation * uvs[t2];
-			// uvs[t3] = Rotation * uvs[t3];
-
-			// TODO: Fix rotation offset error
-			// move to sprite pos
-			// Vector2 pos = new Vector2(DecalDef.sprite.rect.center.x / DecalDef.sprite.texture.width, DecalDef.sprite.rect.center.y / DecalDef.sprite.texture.height);
-			var offset = Vector2.one * 0.5f;
+			Vector2 offset = Vector2.one * 0.5f;
 			uvs[t1] += offset;
 			uvs[t2] += offset;
 			uvs[t3] += offset;
 		}
-
 
 		bool FacingNormal(Vector3 v1, Vector3 v2, Vector3 v3)
 		{

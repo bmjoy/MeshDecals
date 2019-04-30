@@ -12,6 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2763a09798f787f4c9d7ede5b24e50e5, type: 3}
   m_Name: DecalDef
   m_EditorClassIdentifier: 
-  material: {fileID: 2100000, guid: 49ddd49cbe29cda4993fc86c8c87f787, type: 2}
-  sprite: {fileID: 21300004, guid: 5524b318e995544458f06c03ffd8fde1, type: 3}
+  material: {fileID: 2100000, guid: 123d5c4a5d0e8f64bae07b5d128cf421, type: 2}
+  sprite: {fileID: 0}
+  size: 0.05
+  normalFactor: -1
+  depth: 1
+  rotation: 0
+  pointOffset: 0.25
   randomRotation: 1
