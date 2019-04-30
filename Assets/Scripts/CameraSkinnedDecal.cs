@@ -12,7 +12,7 @@ namespace DecalSystem
 		public Material decalMaterial;
 		[Range(0.05f, 2f)] public float m_Size = 0.2f;
 		[Range(-1, 1)] public float m_NormalFactor = 0;
-		[Range(0.001f, 10)] public float m_Offset = 0.1f;
+		[Range(0.001f, 10)] public float m_Offset = 0.25f;
 
 		float m_Pitch;
 		float m_Yaw;
@@ -59,8 +59,8 @@ namespace DecalSystem
 				DecalSet decalset = hitInfo.transform.GetComponent<DecalSet>();
 				if (decalset == null)
 					return;
-				
-				decalset.AddDecal(transform, hitInfo.point, decalDef, m_Size, Random.Range(0, 360), m_NormalFactor, m_Offset);
+
+				decalset.AddDecal(transform.forward, hitInfo.point, decalDef);
 			}
 
 		}

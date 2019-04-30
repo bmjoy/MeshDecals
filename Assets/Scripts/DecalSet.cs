@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -29,11 +28,11 @@ namespace DecalSystem
 
 		// builder vars
 		Matrix4x4 VP;
-		Transform Origin;
+		Vector3 Direction;
 		Vector3 Point;
 		DecalDefinition DecalDef;
 		float Size;
-		float Rotation;
+		Quaternion Rotation;
 		float NormalFactor;
 		float PointBackwardOffset;
 		float Depth;
@@ -53,35 +52,109 @@ namespace DecalSystem
 			Init();
 		}
 
+		public void AddDecal(Vector3 direction, Vector3 point, DecalDefinition decalDefinition, float size, Quaternion rotation, float normalFactor = 0, float pointBackwardOffset = 0.25f, float depth = 1)
+		{
+			// set globals
+			SetUp(direction,
+				point,
+				decalDefinition,
+				size,
+				rotation,
+				normalFactor,
+				pointBackwardOffset,
+				depth);
+
+			Process();
+		}
+
+
+		public void AddDecal(Vector3 direction, Vector3 point, DecalDefinition decalDefinition)
+		{
+			// set globals
+			SetUp(direction,
+				point,
+				decalDefinition,
+				decalDefinition.size,
+				decalDefinition.randomRotation ? Quaternion.Euler(0, 0, Random.Range(0, 360)) : Quaternion.Euler(0, 0, decalDefinition.rotation),
+				decalDefinition.normalFactor,
+				decalDefinition.pointOffset,
+				decalDefinition.depth);
+
+			Process();
+		}
+
+		public void AddDecal(Vector3 direction, Vector3 point, DecalDefinition decalDefinition, float size)
+		{
+			// set globals
+			SetUp(direction,
+				point,
+				decalDefinition,
+				size,
+				decalDefinition.randomRotation ? Quaternion.Euler(0, 0, Random.Range(0, 360)) : Quaternion.Euler(0, 0, decalDefinition.rotation),
+				decalDefinition.normalFactor,
+				decalDefinition.pointOffset,
+				decalDefinition.depth);
+
+			Process();
+		}
+
+		public void AddDecal(Vector3 direction, Vector3 point, DecalDefinition decalDefinition, float size, Quaternion rotation)
+		{
+			// set globals
+			SetUp(direction,
+				point,
+				decalDefinition,
+				size,
+				rotation,
+				decalDefinition.normalFactor,
+				decalDefinition.pointOffset,
+				decalDefinition.depth);
+
+			Process();
+		}
+
+		public void AddDecal(Vector3 direction, Vector3 point, DecalDefinition decalDefinition, float size, Quaternion rotation, float normalFactor = 0)
+		{
+			// set globals
+			SetUp(direction,
+				point,
+				decalDefinition,
+				size,
+				rotation,
+				normalFactor,
+				decalDefinition.pointOffset,
+				decalDefinition.depth);
+
+			Process();
+		}
+
+		void SetUp(Vector3 direction, Vector3 point, DecalDefinition decalDefinition, float size, Quaternion rotation, float normalFactor = 0, float pointBackwardOffset = 0.25f, float depth = 1)
+		{
+			// set globals
+			Direction = direction;
+			Point = point;
+			DecalDef = decalDefinition;
+			Size = size;
+			Rotation = rotation;
+			NormalFactor = normalFactor;
+			PointBackwardOffset = pointBackwardOffset;
+			Depth = depth;
+		}
+
 		void CalculateMatrixAndPlanes()
 		{
 			// project from a close point from the hit point
-			// Matrix4x4 v = Matrix4x4.Inverse(Matrix4x4.TRS(Point - Origin.forward * PointBackwardOffset, Quaternion.Euler(0, 0, Rotation) *Origin.transform.rotation, new Vector3(1, 1, -1)));
-			Matrix4x4 v = Matrix4x4.Inverse(Matrix4x4.TRS(Point - Origin.forward * PointBackwardOffset, Quaternion.Euler(0, 0, DecalDef.rotation) * Origin.transform.rotation, new Vector3(1, 1, -1)));
+			Matrix4x4 v = Matrix4x4.Inverse(Matrix4x4.TRS(Point - Direction * PointBackwardOffset, Quaternion.LookRotation(Direction, Vector3.up) * Rotation, new Vector3(1, 1, -1)));
 			// project from origin (need a high depth value)
 			// Matrix4x4 v = Matrix4x4.Inverse(Matrix4x4.TRS(origin.position, origin.rotation, new Vector3(1, 1, -1)));
-			Matrix4x4 p = Matrix4x4.Ortho(-(DecalDef.sprite.rect.size.x / DecalDef.sprite.texture.width) * Size,
-											(DecalDef.sprite.rect.size.x / DecalDef.sprite.texture.width) * Size,
-											-(DecalDef.sprite.rect.size.y / DecalDef.sprite.texture.height) * Size,
-											(DecalDef.sprite.rect.size.y / DecalDef.sprite.texture.height) * Size,
-											0.0001f, Depth);
+			Matrix4x4 p = Matrix4x4.Ortho(-Size, Size, -Size, Size, 0.0001f, Depth);
 			VP = p * v;
 
 			Planes = GeometryUtility.CalculateFrustumPlanes(VP);
 		}
 
-		public void AddDecal(Transform origin, Vector3 point, DecalDefinition decalDefinition, float size = 0.2f, float rotation = 0, float normalFactor = 0, float pointBackwardOffset = 0.1f, float depth = 1)
+		void Process()
 		{
-			// set globals
-			Origin = origin;
-			Point = point;
-			DecalDef = decalDefinition;
-			Size = size;
-			Rotation = decalDefinition.randomRotation ? rotation : 0;
-			NormalFactor = normalFactor;
-			PointBackwardOffset = pointBackwardOffset;
-			Depth = depth;
-
 			// calculate matrix and frustum planes
 			CalculateMatrixAndPlanes();
 
@@ -191,22 +264,28 @@ namespace DecalSystem
 			uvs[t3] = VP * transform.localToWorldMatrix * new Vector4(Vertices[t3].x, Vertices[t3].y, Vertices[t3].z, 1);
 
 			// scale to fit
-			Vector2 aspect = new Vector2((DecalDef.sprite.rect.size.x / DecalDef.sprite.texture.width), (DecalDef.sprite.rect.size.y / DecalDef.sprite.texture.height));
-			uvs[t1] *= aspect;
-			uvs[t2] *= aspect;
-			uvs[t3] *= aspect;
+			// Vector2 aspect = new Vector2((DecalDef.sprite.rect.size.x / DecalDef.sprite.texture.width), (DecalDef.sprite.rect.size.y / DecalDef.sprite.texture.height));
+			// uvs[t1] *= aspect;
+			// uvs[t2] *= aspect;
+			// uvs[t3] *= aspect;
 
 			//scale more
 			uvs[t1] *= 0.5f;
 			uvs[t2] *= 0.5f;
 			uvs[t3] *= 0.5f;
 
+			// rotate
+			// uvs[t1] = Rotation * uvs[t1];
+			// uvs[t2] = Rotation * uvs[t2];
+			// uvs[t3] = Rotation * uvs[t3];
+
 			// TODO: Fix rotation offset error
 			// move to sprite pos
-			Vector2 pos = new Vector2(DecalDef.sprite.rect.center.x / DecalDef.sprite.texture.width, DecalDef.sprite.rect.center.y / DecalDef.sprite.texture.height);
-			uvs[t1] += pos;
-			uvs[t2] += pos;
-			uvs[t3] += pos;
+			// Vector2 pos = new Vector2(DecalDef.sprite.rect.center.x / DecalDef.sprite.texture.width, DecalDef.sprite.rect.center.y / DecalDef.sprite.texture.height);
+			var offset = Vector2.one * 0.5f;
+			uvs[t1] += offset;
+			uvs[t2] += offset;
+			uvs[t3] += offset;
 		}
 
 
@@ -214,7 +293,7 @@ namespace DecalSystem
 		{
 			Plane plane = new Plane(v1, v2, v3);
 
-			if (Vector3.Dot(-Origin.forward.normalized, plane.normal) < NormalFactor)
+			if (Vector3.Dot(-Direction.normalized, plane.normal) < NormalFactor)
 				return false;
 
 			return true;
