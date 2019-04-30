@@ -311,14 +311,20 @@ namespace DecalSystem
 
 		bool isInsideFrustum(int t1, int t2, int t3)
 		{
+			Vector3[] vecs = new Vector3[] { Vertices[t1], Vertices[t2], Vertices[t3] };
+
 			// check against the 6 planes
-			for (int i = 0; i < 6; i++)
-			{
+			// for (int i = 0; i < 6; i++)
+			// {
 				if (!FacingNormal(Vertices[t1], Vertices[t2], Vertices[t3]))
 					return false;
-				if (!Planes[i].GetSide(transform.TransformPoint(Vertices[t1])) && !Planes[i].GetSide(transform.TransformPoint(Vertices[t2])) && !Planes[i].GetSide(transform.TransformPoint(Vertices[t3])))
+
+				// if (!Planes[i].GetSide(transform.TransformPoint(Vertices[t1])) && !Planes[i].GetSide(transform.TransformPoint(Vertices[t2])) && !Planes[i].GetSide(transform.TransformPoint(Vertices[t3])))
+				// 	return false;
+
+				if (!GeometryUtility.TestPlanesAABB(Planes, GeometryUtility.CalculateBounds(vecs, transform.localToWorldMatrix)))
 					return false;
-			}
+			// }
 			return true;
 		}
 
@@ -363,9 +369,13 @@ namespace DecalSystem
 
 		bool FacingNormal(Vector3 v1, Vector3 v2, Vector3 v3)
 		{
-			Plane plane = new Plane(v1, v2, v3);
+			// Plane plane = new Plane(v1, v2, v3);
+			var vec1 = v2 - v1;
+			var vec2 = v3 - v1;
+			var norm = Vector3.Cross(vec1, vec2);
+			norm.Normalize();
 
-			if (Vector3.Dot(-Direction.normalized, plane.normal) < NormalFactor)
+			if (Vector3.Dot(-Direction.normalized, norm) < NormalFactor)
 				return false;
 
 			return true;
