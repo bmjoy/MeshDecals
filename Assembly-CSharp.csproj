@@ -59,6 +59,7 @@
      <Compile Include="Assets\DecalSystem\DecalSystem\DecalBuilder.cs" />
      <Compile Include="Assets\Scripts\CameraSkinnedDecal.cs" />
      <Compile Include="Assets\Scripts\Decal.cs" />
+     <Compile Include="Assets\Scripts\DecalBuilder.cs" />
      <Compile Include="Assets\Scripts\DecalDefinition.cs" />
      <Compile Include="Assets\Scripts\DecalPolygon.cs" />
      <Compile Include="Assets\Scripts\DecalSet.cs" />

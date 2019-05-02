@@ -172,14 +172,17 @@ namespace DecalSystem
 
 		void Process()
 		{
-			// calculate matrix and frustum planes
-			CalculateMatrixAndPlanes();
-
 			// choose which type of decal
 			if (isSkinned)
+			{
+				// calculate matrix and frustum planes
+				CalculateMatrixAndPlanes();
 				AddDecalSkinned();
+			}
 			else
+			{
 				AddDecalStatic();
+			}
 
 			// increase counter
 			DecalCount++;
@@ -195,42 +198,23 @@ namespace DecalSystem
 
 		void AddDecalStatic()
 		{
-			// get decalmesh
-			Mesh decalMesh = Mesh.Instantiate(MFilter.sharedMesh);
-
-			// uvs
-			Vector2[] uvs = decalMesh.uv;
-
-			// process each submesh
-			for (int subMesh = 0; subMesh < decalMesh.subMeshCount; subMesh++)
-			{
-				List<int> triangleList = new List<int>();
-				int[] triangles = decalMesh.GetTriangles(subMesh);
-
-				// check each triangle against view Frustum
-				for (int i = 0; i < triangles.Length; i += 3)
-				{
-					if (isInsideFrustum(triangles[i], triangles[i + 1], triangles[i + 2]))
-					{
-						// TODO: need to clip decals to frustum, otherwise sprite decals leak
-						triangleList.Add(triangles[i]);
-						triangleList.Add(triangles[i + 1]);
-						triangleList.Add(triangles[i + 2]);
-
-						GenerateUVs(triangles[i], triangles[i + 1], triangles[i + 2], ref uvs);
-					}
-				}
-
-				decalMesh.SetTriangles(triangleList.ToArray(), subMesh);
-			}
-			decalMesh.uv = uvs;
+			// Create decalmesh
+			Mesh decalMesh = new Mesh();
 
 			// create go
 			GameObject decalGO = new GameObject("decalSkinned");
-			decalGO.transform.parent = MFilter.transform;
-			decalGO.transform.localPosition = Vector3.zero;
-			decalGO.transform.localRotation = Quaternion.identity;
-			decalGO.transform.localScale = Vector3.one;
+			// decalGO.transform.parent = MFilter.transform;
+			decalGO.transform.position = Point;
+			decalGO.transform.forward = Direction;
+
+			// create decal component
+			Decal decal = decalGO.AddComponent<Decal>();
+			decal.Init(DecalDef, decalMesh);
+
+			// create a mesh
+			decalMesh = DecalBuilder.CreateDecalMesh(decal, gameObject, MFilter.sharedMesh);
+
+			decal.mesh = decalMesh;
 
 			// meshfilter
 			MeshFilter decalMf = decalGO.AddComponent<MeshFilter>();
@@ -240,10 +224,6 @@ namespace DecalSystem
 			MeshRenderer decalSkinRend = decalGO.AddComponent<MeshRenderer>();
 			decalSkinRend.shadowCastingMode = ShadowCastingMode.Off;
 			decalSkinRend.sharedMaterial = DecalDef.material;
-
-			// create decal component
-			Decal decal = decalGO.AddComponent<Decal>();
-			decal.Init(DecalDef, decalMesh);
 
 			DecalList.Add(decal);
 		}
@@ -366,9 +346,8 @@ namespace DecalSystem
 
 		bool FacingNormal(int t1, int t2, int t3)
 		{
-			// Plane plane = new Plane(v1, v2, v3);
 			Vector3 vec1 = Vertices[t2] - Vertices[t1];
-			Vector3 vec2 = Vertices[3] - Vertices[t1];
+			Vector3 vec2 = Vertices[t3] - Vertices[t1];
 			Vector3 norm = Vector3.Cross(vec1, vec2);
 			norm.Normalize();
 
