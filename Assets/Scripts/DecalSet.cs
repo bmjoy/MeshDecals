@@ -203,9 +203,9 @@ namespace DecalSystem
 
 			// create go
 			GameObject decalGO = new GameObject("decalSkinned");
-			// decalGO.transform.parent = MFilter.transform;
+			decalGO.transform.parent = MFilter.transform;
 			decalGO.transform.position = Point;
-			decalGO.transform.forward = Direction;
+			decalGO.transform.rotation = Quaternion.LookRotation(Direction, Vector3.up) * Rotation;
 
 			// create decal component
 			Decal decal = decalGO.AddComponent<Decal>();

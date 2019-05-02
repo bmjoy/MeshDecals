@@ -20,7 +20,7 @@ namespace DecalSystem
 
 		public void SetScale(float size)
 		{
-			Vector3 scale = transform.localScale;
+			Vector3 scale = Vector3.one;
 			if (decalDefinition.sprite != null)
 			{
 				float ratio = (float)decalDefinition.sprite.rect.width / decalDefinition.sprite.rect.height;
@@ -38,9 +38,9 @@ namespace DecalSystem
 				{
 					scale.x = scale.y * ratio;
 				}
-				scale.z = decalDefinition.depth;
-				transform.localScale = scale * size;
 			}
+			scale.z = decalDefinition.depth;
+			transform.localScale = scale * size;
 		}
 	}
 }

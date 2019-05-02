@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using DecalSystem;
 
+//TODO: code cleanup
 namespace DecalSystem
 {
 	public class DecalBuilder
@@ -21,20 +22,15 @@ namespace DecalSystem
 
 			for (int i = 0; i < triangles.Length; i += 3)
 			{
-				int i1 = triangles[i];
-				int i2 = triangles[i + 1];
-				int i3 = triangles[i + 2];
+				Vector3 v1 = matrix.MultiplyPoint(vertices[triangles[i]]);
+				Vector3 v2 = matrix.MultiplyPoint(vertices[triangles[i + 1]]);
+				Vector3 v3 = matrix.MultiplyPoint(vertices[triangles[i + 2]]);
 
-				Vector3 v1 = matrix.MultiplyPoint(vertices[i1]);
-				Vector3 v2 = matrix.MultiplyPoint(vertices[i2]);
-				Vector3 v3 = matrix.MultiplyPoint(vertices[i3]);
-
-				Vector3 side1 = v2 - v1;
-				Vector3 side2 = v3 - v1;
-				Vector3 normal = Vector3.Cross(side1, side2).normalized;
-				
-				if (Vector3.Dot(decal.transform.forward, normal) < decal.decalDefinition.normalFactor)
+				Vector3 normal = Vector3.Cross(vertices[triangles[i + 1]] - vertices[triangles[i]], vertices[triangles[i + 2]] - vertices[triangles[i]]).normalized;
+				if (Vector3.Dot(-decal.transform.forward, normal) < decal.decalDefinition.normalFactor)
 					continue;
+
+				normal = Vector3.Cross(v2 - v1, v3 - v1).normalized;
 
 				DecalPolygon poly = new DecalPolygon(v1, v2, v3);
 
@@ -62,12 +58,7 @@ namespace DecalSystem
 				AddPolygon(poly, normal);
 			}
 
-			if (decal.decalDefinition.sprite != null)
-				GenerateTexCoords(startVertexCount, decal.decalDefinition.sprite);
-			else
-			{
-				GenerateTexCoords(startVertexCount, decal.decalDefinition.sprite);
-			}
+			GenerateTexCoords(startVertexCount, decal.decalDefinition.sprite);
 
 			return CreateMesh();
 		}
@@ -97,11 +88,21 @@ namespace DecalSystem
 
 		static void GenerateTexCoords(int start, Sprite sprite)
 		{
-			Rect rect = sprite.rect;
-			rect.x /= sprite.texture.width;
-			rect.y /= sprite.texture.height;
-			rect.width /= sprite.texture.width;
-			rect.height /= sprite.texture.height;
+			Rect rect;
+			if (sprite)
+			{
+				rect = sprite.rect;
+				rect.x /= sprite.texture.width;
+				rect.y /= sprite.texture.height;
+				rect.width /= sprite.texture.width;
+				rect.height /= sprite.texture.height;
+			}
+			else
+			{
+				rect = new Rect();
+				rect.xMin = rect.yMin = 0;
+				rect.xMax = rect.yMax = 1;
+			}
 
 			for (int i = start; i < bufVertices.Count; i++)
 			{
