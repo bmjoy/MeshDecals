@@ -316,7 +316,7 @@ namespace DecalSystem
 			vecs[1] = Vertices[t2];
 			vecs[2] = Vertices[t3];
 
-			if (!FacingNormal(Vertices[t1], Vertices[t2], Vertices[t3]))
+			if (!FacingNormal(t1, t2, t3))
 				return false;
 
 			if (!GeometryUtility.TestPlanesAABB(Planes, GeometryUtility.CalculateBounds(vecs, transform.localToWorldMatrix)))
@@ -364,12 +364,12 @@ namespace DecalSystem
 			}
 		}
 
-		bool FacingNormal(Vector3 v1, Vector3 v2, Vector3 v3)
+		bool FacingNormal(int t1, int t2, int t3)
 		{
 			// Plane plane = new Plane(v1, v2, v3);
-			var vec1 = v2 - v1;
-			var vec2 = v3 - v1;
-			var norm = Vector3.Cross(vec1, vec2);
+			Vector3 vec1 = Vertices[t2] - Vertices[t1];
+			Vector3 vec2 = Vertices[3] - Vertices[t1];
+			Vector3 norm = Vector3.Cross(vec1, vec2);
 			norm.Normalize();
 
 			if (Vector3.Dot(-Direction.normalized, norm) < NormalFactor)
