@@ -4,12 +4,6 @@ using UnityEngine.Rendering;
 
 namespace DecalSystem
 {
-	public enum DecalSetType
-	{
-		Static,
-		Skinned,
-	}
-
 	public class DecalSet : MonoBehaviour
 	{
 		public int MaxDecals = 10;

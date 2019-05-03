@@ -1,9 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Rendering;
 using System.Collections.Generic;
-using DecalSystem;
 
-//TODO: code cleanup
 namespace DecalSystem
 {
 	public static class DecalBuilder

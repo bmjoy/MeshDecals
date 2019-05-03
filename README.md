@@ -1,10 +1,7 @@
-# SkinnedDecals
-A simple un-optimized bare bones skinned decal system for Unity.
-
-## How it works
-The system tests each vertice of a triangle against the 6 planes of a view frustum (ortho). You can get view frustum planes by using GeometryUtility.CalculateFrustumPlanes(Maxtrix4x4 matrix). The view is not taken from the camera, but from a custom Matrix4x4 I took a day to get it working, in other words, you dont need a camera to project decals.
+# MeshDecals
+A simple and un-optimized bare bones mesh decal system for Unity.
 
 ## Note
-The system is not optimized, therefore not actually usable in a real project. The decal creation is expensive (around 30ms here), could be threaded, and the decals skinned meshes are not combined (lots of drawcalls).
+The system is not optimized. The decal creation is expensive, could be threaded (could it ?). Ever wondered why modern games don't have skinned decals at all ? or end up using sliding deferred decals ? Mesh based decals can be expensive, as they depend on the amount of vertices your mesh has, so, super high poly meshes (like the ones in AAA games) are super bad to creates decals to, thats one of the reasons of why they don't do it. The other reason is because they are lazy.
 
 ![](skinDecal1.gif)
