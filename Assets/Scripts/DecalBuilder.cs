@@ -8,20 +8,21 @@ namespace DecalSystem
 {
 	public static class DecalBuilder
 	{
+		// builder vars
 		static List<Vector3> bufVertices = new List<Vector3>();
 		static List<Vector3> bufNormals = new List<Vector3>();
 		static List<Vector2> bufTexCoords = new List<Vector2>();
 		static List<int> bufIndices = new List<int>();
 
-		// builder vars
+		// some globals
 		public static Decal decal;
 		public static GameObject affectedObject;
 		public static Mesh decalMesh;
 		public static Vector3[] vertices;
 		public static int[] triangles;
+
 		// isInsidefrustum aux vars
 		static Vector3[] vecs = new Vector3[3];
-
 
 		public static Vector3 direction;
 		public static Vector3 point;
@@ -52,8 +53,14 @@ namespace DecalSystem
 			// create decal GO
 			GameObject decalGO = new GameObject("decalSkinned");
 			decalGO.transform.parent = affectedObject.transform;
+
+			// create decal component
+			decal = decalGO.AddComponent<Decal>();
+			decal.Init(decalDef, isSkinned, affectedObject);
+
 			if (isSkinned)
 			{
+				CalculateMatrixAndPlanes();
 				decalGO.transform.localPosition = Vector3.zero;
 				decalGO.transform.localRotation = Quaternion.identity;
 				decalGO.transform.localScale = Vector3.one;
@@ -63,10 +70,6 @@ namespace DecalSystem
 				decalGO.transform.position = DecalBuilder.point;
 				decalGO.transform.rotation = Quaternion.LookRotation(DecalBuilder.direction, Vector3.up) * DecalBuilder.rotation;
 			}
-
-			// create decal component
-			decal = decalGO.AddComponent<Decal>();
-			decal.Init(decalDef, decalMesh, isSkinned, affectedObject);
 		}
 
 		public static void CreateDecalMeshStatic()
@@ -118,9 +121,15 @@ namespace DecalSystem
 			decal.SetMesh(decalMesh);
 		}
 
-		public static void CreateDecalMeshSkinned(Mesh bakedMesh)
+		public static void CreateDecalMeshSkinned(SkinnedMeshRenderer smr)
 		{
-			decalMesh = Mesh.Instantiate(bakedMesh);
+
+			// get a snapshot of the mesh to test against
+			Mesh bakedMesh = new Mesh();
+			smr.BakeMesh(bakedMesh);
+
+			decalMesh = Mesh.Instantiate(smr.sharedMesh);
+
 			// get vertices that are going to be tested
 			vertices = bakedMesh.vertices;
 
@@ -161,12 +170,12 @@ namespace DecalSystem
 
 			Matrix4x4 p;
 			if (decal.decalDefinition.sprite == null)
-				p = Matrix4x4.Ortho(-size, size, -size, size, 0.0001f, depth);
+				p = Matrix4x4.Ortho(-size / 2, size / 2, -size / 2, size / 2, 0.0001f, depth);
 			else
-				p = Matrix4x4.Ortho(-(decal.decalDefinition.sprite.rect.size.x / decal.decalDefinition.sprite.texture.width) * size,
-									(decal.decalDefinition.sprite.rect.size.x / decal.decalDefinition.sprite.texture.width) * size,
-									-(decal.decalDefinition.sprite.rect.size.y / decal.decalDefinition.sprite.texture.height) * size,
-									(decal.decalDefinition.sprite.rect.size.y / decal.decalDefinition.sprite.texture.height) * size,
+				p = Matrix4x4.Ortho(-(decal.decalDefinition.sprite.rect.size.x / decal.decalDefinition.sprite.texture.width) * 4 * size,
+									(decal.decalDefinition.sprite.rect.size.x / decal.decalDefinition.sprite.texture.width) * 4 * size,
+									-(decal.decalDefinition.sprite.rect.size.y / decal.decalDefinition.sprite.texture.height) * 4 * size,
+									(decal.decalDefinition.sprite.rect.size.y / decal.decalDefinition.sprite.texture.height) * 4 * size,
 									0.0001f, depth);
 
 			vP = p * v;

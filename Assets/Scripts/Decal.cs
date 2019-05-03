@@ -15,7 +15,7 @@ namespace DecalSystem
 
 		Vector3 oldScale;
 
-		public void Init(DecalDefinition decalDef, Mesh mesh, bool isSkinned, GameObject affectedObj)
+		public void Init(DecalDefinition decalDef, bool isSkinned, GameObject affectedObj)
 		{
 			this.isSkinned = isSkinned;
 			if (isSkinned)
@@ -25,7 +25,7 @@ namespace DecalSystem
 				{
 					smr.rootBone = affectedObj.GetComponent<SkinnedMeshRenderer>().rootBone;
 					smr.bones = affectedObj.GetComponent<SkinnedMeshRenderer>().bones;
-					smr.sharedMaterial = affectedObj.GetComponent<SkinnedMeshRenderer>().sharedMaterial;
+					smr.sharedMaterial = decalDef.material;
 				}
 			}
 			else
@@ -72,7 +72,7 @@ namespace DecalSystem
 			else
 				mf.sharedMesh = mesh;
 		}
-		
+
 		public Mesh GetMesh()
 		{
 			if (isSkinned)

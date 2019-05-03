@@ -57,7 +57,7 @@ namespace DecalSystem
 			{
 				DecalSet decalset = hitInfo.transform.GetComponent<DecalSet>();
 				if (decalset != null)
-					decalset.AddDecal(transform.forward, hitInfo.point, decalDef);
+					decalset.AddDecal(decalDef, transform.forward, hitInfo.point);
 			}
 
 		}

@@ -24,7 +24,7 @@ namespace DecalSystem
 		SkinnedMeshRenderer SkiMesh;
 		MeshFilter MFilter;
 		bool isSkinned;
-		
+
 		// cache vertices if it is static obj (unchanging)
 		Vector3[] vertices;
 		int[] triangles;
@@ -51,7 +51,7 @@ namespace DecalSystem
 			Init();
 		}
 
-		public void AddDecal(Vector3 direction, Vector3 point, DecalDefinition decalDefinition, float size, Quaternion rotation, float normalFactor = 0, float pointBackwardOffset = 0.25f, float depth = 1)
+		public void AddDecal(DecalDefinition decalDefinition, Vector3 direction, Vector3 point, float size, Quaternion rotation, float normalFactor = 0, float pointBackwardOffset = 0.25f, float depth = 1)
 		{
 			// set globals
 			DecalBuilder.SetUp(isSkinned,
@@ -70,7 +70,7 @@ namespace DecalSystem
 			Process();
 		}
 
-		public void AddDecal(Vector3 direction, Vector3 point, DecalDefinition decalDefinition)
+		public void AddDecal(DecalDefinition decalDefinition, Vector3 direction, Vector3 point)
 		{
 			// set globals
 			DecalBuilder.SetUp(isSkinned,
@@ -113,18 +113,15 @@ namespace DecalSystem
 		{
 			// create a mesh
 			DecalBuilder.CreateDecalMeshStatic();
-			
+			// get decal
 			DecalList.Add(DecalBuilder.decal);
 		}
 
 		void AddDecalSkinned()
 		{
-			// get a snapshot of the mesh to test against
-			Mesh bakedMesh = new Mesh();
-			SkiMesh.BakeMesh(bakedMesh);
-
-			DecalBuilder.CreateDecalMeshSkinned(bakedMesh);
-			
+			// create mesh
+			DecalBuilder.CreateDecalMeshSkinned(SkiMesh);
+			// get decal
 			DecalList.Add(DecalBuilder.decal);
 		}
 
