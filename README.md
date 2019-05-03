@@ -11,6 +11,7 @@ Ever wondered why modern games don't have skinned decals at all ? or end up usin
 * Add clipping support for skinned decals (hard)
 
 ![](skinDecal1.gif)
+![](decals.gif)
 
 ## Credits
 * Deni35 - His/hers free simple decal system at the asset store

@@ -9,14 +9,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2763a09798f787f4c9d7ede5b24e50e5, type: 3}
+  m_Script: {fileID: 11500000, guid: b509f41d488254c409fd07d57b4b1adc, type: 3}
   m_Name: DecalDef
   m_EditorClassIdentifier: 
   material: {fileID: 2100000, guid: 123d5c4a5d0e8f64bae07b5d128cf421, type: 2}
   sprite: {fileID: 0}
-  size: 2
+  size: 0.2
   normalFactor: 0
   depth: 1
   rotation: 0
   pointOffset: 0.25
-  randomRotation: 0
+  randomRotation: 1
