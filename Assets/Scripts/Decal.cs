@@ -6,15 +6,37 @@ namespace DecalSystem
 	public class Decal : MonoBehaviour
 	{
 		public DecalDefinition decalDefinition;
-		public Mesh mesh;
+
+		public bool isSkinned;
+
+		public SkinnedMeshRenderer smr;
+		public MeshFilter mf;
+		public MeshRenderer mr;
 
 		Vector3 oldScale;
 
-		public void Init(DecalDefinition decalDef, Mesh mesh)
+		public void Init(DecalDefinition decalDef, Mesh mesh, bool isSkinned, GameObject affectedObj)
 		{
+			this.isSkinned = isSkinned;
+			if (isSkinned)
+			{
+				smr = gameObject.AddComponent<SkinnedMeshRenderer>();
+				if (affectedObj)
+				{
+					smr.rootBone = affectedObj.GetComponent<SkinnedMeshRenderer>().rootBone;
+					smr.bones = affectedObj.GetComponent<SkinnedMeshRenderer>().bones;
+					smr.sharedMaterial = affectedObj.GetComponent<SkinnedMeshRenderer>().sharedMaterial;
+				}
+			}
+			else
+			{
+				mf = gameObject.AddComponent<MeshFilter>();
+				mr = gameObject.AddComponent<MeshRenderer>();
+				mr.sharedMaterial = decalDef.material;
+			}
+
 			oldScale = transform.localScale;
 			decalDefinition = decalDef;
-			this.mesh = mesh;
 			SetScale(decalDefinition.size);
 		}
 
@@ -41,6 +63,22 @@ namespace DecalSystem
 			}
 			scale.z = decalDefinition.depth;
 			transform.localScale = scale * size;
+		}
+
+		public void SetMesh(Mesh mesh)
+		{
+			if (isSkinned)
+				smr.sharedMesh = mesh;
+			else
+				mf.sharedMesh = mesh;
+		}
+		
+		public Mesh GetMesh()
+		{
+			if (isSkinned)
+				return smr.sharedMesh;
+			else
+				return mf.sharedMesh;
 		}
 	}
 }

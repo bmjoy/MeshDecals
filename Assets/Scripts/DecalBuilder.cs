@@ -1,21 +1,76 @@
 ﻿using UnityEngine;
+using UnityEngine.Rendering;
 using System.Collections.Generic;
 using DecalSystem;
 
 //TODO: code cleanup
 namespace DecalSystem
 {
-	public class DecalBuilder
+	public static class DecalBuilder
 	{
-		private static List<Vector3> bufVertices = new List<Vector3>();
-		private static List<Vector3> bufNormals = new List<Vector3>();
-		private static List<Vector2> bufTexCoords = new List<Vector2>();
-		private static List<int> bufIndices = new List<int>();
+		static List<Vector3> bufVertices = new List<Vector3>();
+		static List<Vector3> bufNormals = new List<Vector3>();
+		static List<Vector2> bufTexCoords = new List<Vector2>();
+		static List<int> bufIndices = new List<int>();
 
-		public static Mesh CreateDecalMesh(Decal decal, GameObject affectedObject, Mesh mesh)
+		// builder vars
+		public static Decal decal;
+		public static GameObject affectedObject;
+		public static Mesh decalMesh;
+		public static Vector3[] vertices;
+		public static int[] triangles;
+		// isInsidefrustum aux vars
+		static Vector3[] vecs = new Vector3[3];
+
+
+		public static Vector3 direction;
+		public static Vector3 point;
+		public static Matrix4x4 vP;
+		public static Plane[] planes;
+
+		// custom vals
+		public static float size;
+		public static Quaternion rotation;
+		public static float normalFactor;
+		public static float pointBackwardOffset;
+		public static float depth;
+
+		public static void SetUp(bool isSkinned, GameObject targetObj, ref Vector3[] verts, ref int[] tris, DecalDefinition decalDef, Vector3 dir, Vector3 p, float si, Quaternion rot, float normFac, float pBack, float de)
 		{
-			Vector3[] vertices = mesh.vertices;
-			int[] triangles = mesh.GetTriangles(0);
+			// builder vars
+			affectedObject = targetObj;
+			vertices = verts;
+			triangles = tris;
+			direction = dir;
+			point = p;
+			size = si;
+			rotation = rot;
+			normalFactor = normFac;
+			pointBackwardOffset = pBack;
+			depth = de;
+
+			// create decal GO
+			GameObject decalGO = new GameObject("decalSkinned");
+			decalGO.transform.parent = affectedObject.transform;
+			if (isSkinned)
+			{
+				decalGO.transform.localPosition = Vector3.zero;
+				decalGO.transform.localRotation = Quaternion.identity;
+				decalGO.transform.localScale = Vector3.one;
+			}
+			else
+			{
+				decalGO.transform.position = DecalBuilder.point;
+				decalGO.transform.rotation = Quaternion.LookRotation(DecalBuilder.direction, Vector3.up) * DecalBuilder.rotation;
+			}
+
+			// create decal component
+			decal = decalGO.AddComponent<Decal>();
+			decal.Init(decalDef, decalMesh, isSkinned, affectedObject);
+		}
+
+		public static void CreateDecalMeshStatic()
+		{
 			int startVertexCount = bufVertices.Count;
 
 			Matrix4x4 matrix = decal.transform.worldToLocalMatrix * affectedObject.transform.localToWorldMatrix;
@@ -26,11 +81,9 @@ namespace DecalSystem
 				Vector3 v2 = matrix.MultiplyPoint(vertices[triangles[i + 1]]);
 				Vector3 v3 = matrix.MultiplyPoint(vertices[triangles[i + 2]]);
 
-				Vector3 normal = Vector3.Cross(vertices[triangles[i + 1]] - vertices[triangles[i]], vertices[triangles[i + 2]] - vertices[triangles[i]]).normalized;
-				if (Vector3.Dot(-decal.transform.forward, normal) < decal.decalDefinition.normalFactor)
+				Vector3 normal = Vector3.Cross(v2 - v1, v3 - v1).normalized;
+				if (!FacingNormal(triangles[i], triangles[i + 1], triangles[i + 2]))
 					continue;
-
-				normal = Vector3.Cross(v2 - v1, v3 - v1).normalized;
 
 				DecalPolygon poly = new DecalPolygon(v1, v2, v3);
 
@@ -60,7 +113,131 @@ namespace DecalSystem
 
 			GenerateTexCoords(startVertexCount, decal.decalDefinition.sprite);
 
-			return CreateMesh();
+			decalMesh = StaticCreateMesh();
+
+			decal.SetMesh(decalMesh);
+		}
+
+		public static void CreateDecalMeshSkinned(Mesh bakedMesh)
+		{
+			decalMesh = Mesh.Instantiate(bakedMesh);
+			// get vertices that are going to be tested
+			vertices = bakedMesh.vertices;
+
+			// uvs
+			Vector2[] uvs = bakedMesh.uv;
+
+			// process each submesh
+			for (int subMesh = 0; subMesh < bakedMesh.subMeshCount; subMesh++)
+			{
+				List<int> triangleList = new List<int>();
+				triangles = bakedMesh.GetTriangles(subMesh);
+
+				// check each triangle against view Frustum
+				for (int i = 0; i < triangles.Length; i += 3)
+				{
+					if (isInsideFrustum(triangles[i], triangles[i + 1], triangles[i + 2]))
+					{
+						// TODO: need to clip decals to frustum, otherwise sprite decals leak
+						triangleList.Add(triangles[i]);
+						triangleList.Add(triangles[i + 1]);
+						triangleList.Add(triangles[i + 2]);
+
+						GenerateUVs(triangles[i], triangles[i + 1], triangles[i + 2], ref uvs);
+					}
+				}
+
+				decalMesh.SetTriangles(triangleList.ToArray(), subMesh);
+			}
+			decalMesh.uv = uvs;
+
+			decal.SetMesh(decalMesh);
+		}
+
+		static void CalculateMatrixAndPlanes()
+		{
+			// project from a close point from the hit point
+			Matrix4x4 v = Matrix4x4.Inverse(Matrix4x4.TRS(point - direction * pointBackwardOffset, Quaternion.LookRotation(direction, Vector3.up) * rotation, new Vector3(1, 1, -1)));
+
+			Matrix4x4 p;
+			if (decal.decalDefinition.sprite == null)
+				p = Matrix4x4.Ortho(-size, size, -size, size, 0.0001f, depth);
+			else
+				p = Matrix4x4.Ortho(-(decal.decalDefinition.sprite.rect.size.x / decal.decalDefinition.sprite.texture.width) * size,
+									(decal.decalDefinition.sprite.rect.size.x / decal.decalDefinition.sprite.texture.width) * size,
+									-(decal.decalDefinition.sprite.rect.size.y / decal.decalDefinition.sprite.texture.height) * size,
+									(decal.decalDefinition.sprite.rect.size.y / decal.decalDefinition.sprite.texture.height) * size,
+									0.0001f, depth);
+
+			vP = p * v;
+
+			planes = GeometryUtility.CalculateFrustumPlanes(vP);
+		}
+
+		static bool isInsideFrustum(int t1, int t2, int t3)
+		{
+			vecs[0] = vertices[t1];
+			vecs[1] = vertices[t2];
+			vecs[2] = vertices[t3];
+
+			if (!FacingNormal(t1, t2, t3))
+				return false;
+
+			if (!GeometryUtility.TestPlanesAABB(planes, GeometryUtility.CalculateBounds(vecs, affectedObject.transform.localToWorldMatrix)))
+				return false;
+
+			return true;
+		}
+
+		static void GenerateUVs(int t1, int t2, int t3, ref Vector2[] uvs)
+		{
+			uvs[t1] = vP * decal.transform.localToWorldMatrix * new Vector4(vertices[t1].x, vertices[t1].y, vertices[t1].z, 1);
+			uvs[t2] = vP * decal.transform.localToWorldMatrix * new Vector4(vertices[t2].x, vertices[t2].y, vertices[t2].z, 1);
+			uvs[t3] = vP * decal.transform.localToWorldMatrix * new Vector4(vertices[t3].x, vertices[t3].y, vertices[t3].z, 1);
+
+			if (decal.decalDefinition.sprite == null)
+			{
+				uvs[t1] *= 0.5f;
+				uvs[t2] *= 0.5f;
+				uvs[t3] *= 0.5f;
+
+				Vector2 offset = Vector2.one * 0.5f;
+				uvs[t1] += offset;
+				uvs[t2] += offset;
+				uvs[t3] += offset;
+			}
+			else
+			{
+				// scale to fit
+				Vector2 aspect = new Vector2((decal.decalDefinition.sprite.rect.size.x / decal.decalDefinition.sprite.texture.width), (decal.decalDefinition.sprite.rect.size.y / decal.decalDefinition.sprite.texture.height));
+				uvs[t1] *= aspect;
+				uvs[t2] *= aspect;
+				uvs[t3] *= aspect;
+
+				//scale more
+				uvs[t1] *= 0.5f;
+				uvs[t2] *= 0.5f;
+				uvs[t3] *= 0.5f;
+
+				// move to sprite pos
+				Vector2 pos = new Vector2(decal.decalDefinition.sprite.rect.center.x / decal.decalDefinition.sprite.texture.width, decal.decalDefinition.sprite.rect.center.y / decal.decalDefinition.sprite.texture.height);
+				uvs[t1] += pos;
+				uvs[t2] += pos;
+				uvs[t3] += pos;
+			}
+		}
+
+		static bool FacingNormal(int t1, int t2, int t3)
+		{
+			Vector3 vec1 = vertices[t2] - vertices[t1];
+			Vector3 vec2 = vertices[t3] - vertices[t1];
+			Vector3 norm = Vector3.Cross(vec1, vec2);
+			norm.Normalize();
+
+			if (Vector3.Dot(-direction.normalized, norm) < normalFactor)
+				return false;
+
+			return true;
 		}
 
 		static void AddPolygon(DecalPolygon poly, Vector3 normal)
@@ -116,46 +293,7 @@ namespace DecalSystem
 			}
 		}
 
-		// void GenerateUVs(int t1, int t2, int t3, ref Vector2[] uvs)
-		// {
-		// 	uvs[t1] = VP * transform.localToWorldMatrix * new Vector4(Vertices[t1].x, Vertices[t1].y, Vertices[t1].z, 1);
-		// 	uvs[t2] = VP * transform.localToWorldMatrix * new Vector4(Vertices[t2].x, Vertices[t2].y, Vertices[t2].z, 1);
-		// 	uvs[t3] = VP * transform.localToWorldMatrix * new Vector4(Vertices[t3].x, Vertices[t3].y, Vertices[t3].z, 1);
-
-		// 	if (DecalDef.sprite == null)
-		// 	{
-		// 		uvs[t1] *= 0.5f;
-		// 		uvs[t2] *= 0.5f;
-		// 		uvs[t3] *= 0.5f;
-
-		// 		Vector2 offset = Vector2.one * 0.5f;
-		// 		uvs[t1] += offset;
-		// 		uvs[t2] += offset;
-		// 		uvs[t3] += offset;
-		// 	}
-		// 	else
-		// 	{
-		// 		// scale to fit
-		// 		Vector2 aspect = new Vector2((DecalDef.sprite.rect.size.x / DecalDef.sprite.texture.width), (DecalDef.sprite.rect.size.y / DecalDef.sprite.texture.height));
-		// 		uvs[t1] *= aspect;
-		// 		uvs[t2] *= aspect;
-		// 		uvs[t3] *= aspect;
-
-		// 		//scale more
-		// 		uvs[t1] *= 0.5f;
-		// 		uvs[t2] *= 0.5f;
-		// 		uvs[t3] *= 0.5f;
-
-		// 		// TODO: Fix rotation offset error
-		// 		// move to sprite pos
-		// 		Vector2 pos = new Vector2(DecalDef.sprite.rect.center.x / DecalDef.sprite.texture.width, DecalDef.sprite.rect.center.y / DecalDef.sprite.texture.height);
-		// 		uvs[t1] += pos;
-		// 		uvs[t2] += pos;
-		// 		uvs[t3] += pos;
-		// 	}
-		// }
-
-		static Mesh CreateMesh()
+		static Mesh StaticCreateMesh()
 		{
 			if (bufIndices.Count == 0)
 			{

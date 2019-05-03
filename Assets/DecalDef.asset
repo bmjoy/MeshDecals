@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   material: {fileID: 2100000, guid: 123d5c4a5d0e8f64bae07b5d128cf421, type: 2}
   sprite: {fileID: 0}
-  size: 0.05
-  normalFactor: -1
+  size: 2
+  normalFactor: 0
   depth: 1
   rotation: 0
   pointOffset: 0.25
-  randomRotation: 1
+  randomRotation: 0
