@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace DecalSystem
+namespace lhlv.VFX.DecalSystem
 {
 	public class DecalSet : MonoBehaviour
 	{
@@ -45,7 +45,7 @@ namespace DecalSystem
 			Init();
 		}
 
-		public void AddDecal(DecalDefinition decalDefinition, Vector3 direction, Vector3 point, float size, Quaternion rotation, float normalFactor = 0, float pointBackwardOffset = 0.25f, float depth = 1)
+		public void AddDecal(DecalDefinition decalDefinition, Vector3 direction, Vector3 point, float size, float angle, float normalFactor = 0, float pointBackwardOffset = 0.25f, float depth = 1)
 		{
 			// set globals
 			DecalBuilder.SetUp(isSkinned,
@@ -56,7 +56,7 @@ namespace DecalSystem
 				direction,
 				point,
 				size,
-				rotation,
+				angle,
 				normalFactor,
 				pointBackwardOffset,
 				depth);
@@ -75,7 +75,7 @@ namespace DecalSystem
 				direction,
 				point,
 				decalDefinition.size,
-				decalDefinition.randomRotation ? Quaternion.Euler(0, 0, Random.Range(0, 360)) : Quaternion.Euler(0, 0, decalDefinition.rotation),
+				decalDefinition.randomAngle ? Random.Range(0, 360) : decalDefinition.angle,
 				decalDefinition.normalFactor,
 				decalDefinition.pointOffset,
 				decalDefinition.depth);

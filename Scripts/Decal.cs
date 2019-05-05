@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace DecalSystem
+namespace lhlv.VFX.DecalSystem
 {
 	public class Decal : MonoBehaviour
 	{

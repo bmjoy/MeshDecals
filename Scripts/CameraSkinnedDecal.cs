@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using DecalSystem;
+using lhlv.VFX.DecalSystem;
 
 public class CameraSkinnedDecal : MonoBehaviour
 {

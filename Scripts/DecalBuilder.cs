@@ -2,7 +2,7 @@
 using UnityEngine.Rendering;
 using System.Collections.Generic;
 
-namespace DecalSystem
+namespace lhlv.VFX.DecalSystem
 {
 	public static class DecalBuilder
 	{
@@ -29,12 +29,12 @@ namespace DecalSystem
 
 		// custom vals
 		public static float size;
-		public static Quaternion rotation;
+		public static float angle;
 		public static float normalFactor;
 		public static float pointBackwardOffset;
 		public static float depth;
 
-		public static void SetUp(bool isSkinned, GameObject targetObj, ref Vector3[] verts, ref int[] tris, DecalDefinition decalDef, Vector3 dir, Vector3 p, float si, Quaternion rot, float normFac, float pBack, float de)
+		public static void SetUp(bool isSkinned, GameObject targetObj, ref Vector3[] verts, ref int[] tris, DecalDefinition decalDef, Vector3 dir, Vector3 p, float si, float ang, float normFac, float pBack, float de)
 		{
 			// builder vars
 			affectedObject = targetObj;
@@ -43,7 +43,7 @@ namespace DecalSystem
 			direction = dir;
 			point = p;
 			size = si;
-			rotation = rot;
+			angle = ang;
 			normalFactor = normFac;
 			pointBackwardOffset = pBack;
 			depth = de;
@@ -65,8 +65,8 @@ namespace DecalSystem
 			}
 			else
 			{
-				decalGO.transform.position = DecalBuilder.point;
-				decalGO.transform.rotation = Quaternion.LookRotation(DecalBuilder.direction, Vector3.up) * DecalBuilder.rotation;
+				decalGO.transform.position = point;
+				decalGO.transform.rotation = Quaternion.LookRotation(direction, Vector3.up) * Quaternion.Euler(0, 0, angle);
 			}
 		}
 
@@ -164,7 +164,7 @@ namespace DecalSystem
 		static void CalculateMatrixAndPlanes()
 		{
 			// project from a close point from the hit point
-			Matrix4x4 v = Matrix4x4.Inverse(Matrix4x4.TRS(point - direction * pointBackwardOffset, Quaternion.LookRotation(direction, Vector3.up) * rotation, new Vector3(1, 1, -1)));
+			Matrix4x4 v = Matrix4x4.Inverse(Matrix4x4.TRS(point - direction * pointBackwardOffset, Quaternion.LookRotation(direction, Vector3.up) * Quaternion.Euler(0, 0, angle), new Vector3(1, 1, -1)));
 
 			Matrix4x4 p;
 			if (decal.decalDefinition.sprite == null)

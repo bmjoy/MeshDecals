@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace DecalSystem
+namespace lhlv.VFX.DecalSystem
 {
 	public class DecalPolygon
 	{
