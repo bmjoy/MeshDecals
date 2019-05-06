@@ -3,22 +3,33 @@ using UnityEngine;
 
 namespace lhlv.VFX.DecalSystem
 {
+	public enum DecalType
+	{
+		Static,
+		Skinned,
+		Quad,
+	}
 	public class Decal : MonoBehaviour
 	{
+
 		public DecalDefinition decalDefinition;
 
-		public bool isSkinned;
+		public DecalType decalT;
 
 		public SkinnedMeshRenderer smr;
 		public MeshFilter mf;
 		public MeshRenderer mr;
+		public new BoxCollider collider;
 
 		Vector3 oldScale;
+		Vector2[] originalUvs;
+		Vector2[] uvs;
+		Mesh decalMesh;
 
-		public void Init(DecalDefinition decalDef, bool isSkinned, GameObject affectedObj)
+		public void Init(DecalDefinition decalDef, DecalType decType, GameObject affectedObj)
 		{
-			this.isSkinned = isSkinned;
-			if (isSkinned)
+			decalT = decType;
+			if (decalT == DecalType.Skinned)
 			{
 				smr = gameObject.AddComponent<SkinnedMeshRenderer>();
 				if (affectedObj)
@@ -61,24 +72,73 @@ namespace lhlv.VFX.DecalSystem
 					scale.x = scale.y * ratio;
 				}
 			}
-			scale.z = decalDefinition.depth;
+			if (decalT == DecalType.Quad)
+				scale.z = 0.01f;
+			else
+				scale.z = decalDefinition.depth;
 			transform.localScale = scale * size;
 		}
 
 		public void SetMesh(Mesh mesh)
 		{
-			if (isSkinned)
+			if (decalT == DecalType.Skinned)
 				smr.sharedMesh = mesh;
 			else
 				mf.sharedMesh = mesh;
+			decalMesh = mesh;
+
+			// if can uv expand, set decal to small size, to then grow if necessary
+			if (decalDefinition.canExpand)
+			{
+				// create a collider, because we need it to know when to grow
+				collider = gameObject.AddComponent<BoxCollider>();
+				// we need to downsize collider too
+				collider.size = new Vector3(decalDefinition.minSize, decalDefinition.minSize, decalDefinition.minSize / 2);
+
+				if (decalT != DecalType.Quad)
+				{
+					originalUvs = mesh.uv;
+					uvs = new Vector2[originalUvs.Length];
+
+					// center uvs, and make the image small
+					for (int i = 0; i < uvs.Length; i++)
+					{
+						uvs[i] = (originalUvs[i] * 10f) - (Vector2.one * 5f);
+					}
+
+					decalMesh.uv = uvs;
+				}
+				else
+				{
+					transform.localScale = Vector3.one * decalDefinition.minSize;
+				}
+			}
 		}
 
 		public Mesh GetMesh()
 		{
-			if (isSkinned)
-				return smr.sharedMesh;
-			else
-				return mf.sharedMesh;
+			return decalMesh;
+		}
+
+
+		public void Expand()
+		{
+			if (decalDefinition.canExpand)
+			{
+				if (decalT != DecalType.Quad)
+				{
+					for (int i = 0; i < originalUvs.Length; i++)
+					{
+						uvs[i] = Vector2.Lerp(uvs[i], originalUvs[i], decalDefinition.expandFactor);
+					}
+					decalMesh.uv = uvs;
+				}
+				else
+					transform.localScale = Vector3.Lerp(transform.localScale, Vector3.one * decalDefinition.size, decalDefinition.expandFactor);
+
+				collider.size = Vector3.Lerp(collider.size, new Vector3(1, 1, decalDefinition.minSize / 2) / 4, decalDefinition.expandFactor * decalDefinition.minSize);
+			}
+
 		}
 	}
 }

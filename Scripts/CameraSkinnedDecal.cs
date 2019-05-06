@@ -56,6 +56,5 @@ public class CameraSkinnedDecal : MonoBehaviour
 			if (decalset != null)
 				decalset.AddDecal(decalDef, ray.direction, hitInfo.point);
 		}
-
 	}
 }

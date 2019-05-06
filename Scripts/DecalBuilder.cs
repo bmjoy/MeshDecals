@@ -18,6 +18,7 @@ namespace lhlv.VFX.DecalSystem
 		public static Mesh decalMesh;
 		public static Vector3[] vertices;
 		public static int[] triangles;
+		public static Mesh quadMesh = CreateQuadMesh();
 
 		// isInsidefrustum aux vars
 		static Vector3[] vecs = new Vector3[3];
@@ -34,7 +35,7 @@ namespace lhlv.VFX.DecalSystem
 		public static float pointBackwardOffset;
 		public static float depth;
 
-		public static void SetUp(bool isSkinned, GameObject targetObj, ref Vector3[] verts, ref int[] tris, DecalDefinition decalDef, Vector3 dir, Vector3 p, float si, float ang, float normFac, float pBack, float de)
+		public static void SetUp(DecalType decType, GameObject targetObj, ref Vector3[] verts, ref int[] tris, DecalDefinition decalDef, Vector3 dir, Vector3 p, float si, float ang, float normFac, float pBack, float de)
 		{
 			// builder vars
 			affectedObject = targetObj;
@@ -54,9 +55,9 @@ namespace lhlv.VFX.DecalSystem
 
 			// create decal component
 			decal = decalGO.AddComponent<Decal>();
-			decal.Init(decalDef, isSkinned, affectedObject);
+			decal.Init(decalDef, decType, affectedObject);
 
-			if (isSkinned)
+			if (decType == DecalType.Skinned)
 			{
 				CalculateMatrixAndPlanes();
 				decalGO.transform.localPosition = Vector3.zero;
@@ -159,6 +160,57 @@ namespace lhlv.VFX.DecalSystem
 			decalMesh.uv = uvs;
 
 			decal.SetMesh(decalMesh);
+		}
+
+		public static void CreateDecalMeshQuad()
+		{
+			decal.SetMesh(quadMesh);
+		}
+
+		static Mesh CreateQuadMesh()
+		{
+			var mesh = new Mesh();
+
+			var vertices = new Vector3[4];
+
+			vertices[0] = new Vector3(-0.5f, -0.5f, 0);
+			vertices[1] = new Vector3(0.5f, -0.5f, 0);
+			vertices[2] = new Vector3(-0.5f, 0.5f, 0);
+			vertices[3] = new Vector3(0.5f, 0.5f, 0);
+
+			mesh.vertices = vertices;
+
+			var tris = new int[6];
+
+			tris[0] = 0;
+			tris[1] = 2;
+			tris[2] = 1;
+
+			tris[3] = 2;
+			tris[4] = 3;
+			tris[5] = 1;
+
+			mesh.triangles = tris;
+
+			var normals = new Vector3[4];
+
+			normals[0] = -Vector3.forward;
+			normals[1] = -Vector3.forward;
+			normals[2] = -Vector3.forward;
+			normals[3] = -Vector3.forward;
+
+			mesh.normals = normals;
+
+			var uvs = new Vector2[4];
+
+			uvs[0] = new Vector2(0, 0);
+			uvs[1] = new Vector2(1, 0);
+			uvs[2] = new Vector2(0, 1);
+			uvs[3] = new Vector2(1, 1);
+
+			mesh.uv = uvs;
+			
+			return mesh;
 		}
 
 		static void CalculateMatrixAndPlanes()

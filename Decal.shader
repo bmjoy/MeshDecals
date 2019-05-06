@@ -8,7 +8,7 @@
   SubShader {
     Tags { "RenderType"="Opaque" "Queue"="Geometry+1" "ForceNoShadowCasting"="True" }
     LOD 200
-	Cull Off
+	Cull back
     Offset -1, -1
     
     CGPROGRAM

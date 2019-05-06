@@ -6,8 +6,11 @@ namespace lhlv.VFX.DecalSystem
 {
 	public class DecalSet : MonoBehaviour
 	{
+		[SerializeField]
 		public int MaxDecals = 10;
+
 		[Header("Skinned")]
+		[SerializeField]
 		public SkinQuality DecalQuality = SkinQuality.Bone4;
 
 		[HideInInspector]
@@ -17,7 +20,7 @@ namespace lhlv.VFX.DecalSystem
 		int DecalCount = 0;
 		SkinnedMeshRenderer SkiMesh;
 		MeshFilter MFilter;
-		bool isSkinned;
+		DecalType decType;
 
 		// cache vertices if it is static obj (unchanging)
 		Vector3[] vertices;
@@ -31,12 +34,13 @@ namespace lhlv.VFX.DecalSystem
 			if (SkiMesh != null)
 			{
 				SkiMesh.sharedMesh.MarkDynamic();
-				isSkinned = true;
+				decType = DecalType.Skinned;
 			}
 			else if (MFilter != null)
 			{
 				vertices = MFilter.sharedMesh.vertices;
 				triangles = MFilter.sharedMesh.GetTriangles(0);
+				decType = DecalType.Static;
 			}
 		}
 
@@ -48,7 +52,7 @@ namespace lhlv.VFX.DecalSystem
 		public void AddDecal(DecalDefinition decalDefinition, Vector3 direction, Vector3 point, float size, float angle, float normalFactor = 0, float pointBackwardOffset = 0.25f, float depth = 1)
 		{
 			// set globals
-			DecalBuilder.SetUp(isSkinned,
+			DecalBuilder.SetUp(decType,
 				gameObject,
 				ref vertices,
 				ref triangles,
@@ -67,7 +71,7 @@ namespace lhlv.VFX.DecalSystem
 		public void AddDecal(DecalDefinition decalDefinition, Vector3 direction, Vector3 point)
 		{
 			// set globals
-			DecalBuilder.SetUp(isSkinned,
+			DecalBuilder.SetUp(decType,
 				gameObject,
 				ref vertices,
 				ref triangles,
@@ -83,13 +87,53 @@ namespace lhlv.VFX.DecalSystem
 			Process();
 		}
 
-		void Process()
+		public void AddDecalQuad(DecalDefinition decalDefinition, Vector3 direction, Vector3 point, float size, float angle)
+		{
+			// set globals
+			DecalBuilder.SetUp(DecalType.Quad,
+				gameObject,
+				ref vertices,
+				ref triangles,
+				decalDefinition,
+				direction,
+				point,
+				size,
+				angle,
+				-1,
+				0,
+				1);
+
+			Process(true);
+		}
+
+		public void AddDecalQuad(DecalDefinition decalDefinition, Vector3 direction, Vector3 point)
+		{
+			// set globals
+			DecalBuilder.SetUp(DecalType.Quad,
+				gameObject,
+				ref vertices,
+				ref triangles,
+				decalDefinition,
+				direction,
+				point,
+				decalDefinition.size,
+				decalDefinition.randomAngle ? Random.Range(0, 360) : decalDefinition.angle,
+				-1,
+				0,
+				1);
+
+			Process(true);
+		}
+
+		void Process(bool quad = false)
 		{
 			// choose which type of decal
-			if (isSkinned)
-				AddDecalSkinned();
-			else
+			if (quad)
+				AddDecalQuad();
+			else if (decType == DecalType.Static)
 				AddDecalStatic();
+			else
+				AddDecalSkinned();
 
 			// increase counter
 			DecalCount++;
@@ -115,6 +159,14 @@ namespace lhlv.VFX.DecalSystem
 		{
 			// create mesh
 			DecalBuilder.CreateDecalMeshSkinned(SkiMesh);
+			// get decal
+			DecalList.Add(DecalBuilder.decal);
+		}
+
+		void AddDecalQuad()
+		{
+			// create mesh
+			DecalBuilder.CreateDecalMeshQuad();
 			// get decal
 			DecalList.Add(DecalBuilder.decal);
 		}
