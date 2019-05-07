@@ -72,10 +72,7 @@ namespace lhlv.VFX.DecalSystem
 					scale.x = scale.y * ratio;
 				}
 			}
-			if (decalT == DecalType.Quad)
-				scale.z = 0.01f;
-			else
-				scale.z = decalDefinition.depth;
+			scale.z = decalDefinition.depth;
 			transform.localScale = scale * size;
 		}
 
@@ -136,7 +133,7 @@ namespace lhlv.VFX.DecalSystem
 				else
 					transform.localScale = Vector3.Lerp(transform.localScale, Vector3.one * decalDefinition.size, decalDefinition.expandFactor);
 
-				collider.size = Vector3.Lerp(collider.size, new Vector3(1, 1, decalDefinition.minSize / 2) / 4, decalDefinition.expandFactor * decalDefinition.minSize);
+				collider.size = Vector3.Lerp(collider.size, new Vector3(1, 1, decalDefinition.minSize / 2) / 4, decalDefinition.expandFactor);
 			}
 
 		}

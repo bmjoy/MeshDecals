@@ -12,11 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b509f41d488254c409fd07d57b4b1adc, type: 3}
   m_Name: DecalDef
   m_EditorClassIdentifier: 
+  color: {r: 1, g: 1, b: 1, a: 1}
   material: {fileID: 2100000, guid: 123d5c4a5d0e8f64bae07b5d128cf421, type: 2}
   sprite: {fileID: 0}
-  size: 0.2
+  size: 4
   normalFactor: 0
   depth: 1
-  rotation: 0
-  pointOffset: 0.25
-  randomRotation: 1
+  angle: 0
+  randomAngle: 1
+  pointOffset: 0.5
+  canExpand: 1
+  expandFactor: 0.01
+  minSize: 0.25
