@@ -20,7 +20,9 @@ MonoBehaviour:
   depth: 1
   angle: 0
   randomAngle: 1
-  pointOffset: 0.5
+  pointOffset: 0.2
+  ortho: 0
+  fieldOfView: 60
   canExpand: 1
   expandFactor: 0.01
   minSize: 0.25

@@ -15,6 +15,8 @@ namespace lhlv.VFX.DecalSystem
 		[Range(0, 360)] public float angle = 0;
 		public bool randomAngle = true;
 		[Range(0, 2)] public float pointOffset = 0.25f;
+		public bool ortho = true;
+		[Range(0.0001f, 179)] public float fieldOfView = 0.25f;
 		public bool canExpand = false;
 		[Range(0.01f, 1)] public float expandFactor = 0.1f;
 		[Range(0.01f, 1)] public float minSize = 0.01f;
